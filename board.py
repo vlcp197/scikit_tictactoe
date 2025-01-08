@@ -1,9 +1,9 @@
 # initializes an empty game board 
-def start_board():    
+def start_board() -> list[str]:    
     return [[" " for _ in range(3)] for _ in range(3)]
 
 # the board parameter needs to be a 3X3 list
-def verify_win(board):
+def verify_win(board: list[str]) -> bool:
     for i in range(3):
         # verify if the board have a horizontal line
         if board[i][0] == board[i][1] == board[i][2] != " ":
@@ -22,8 +22,10 @@ def verify_win(board):
     
     return False
     
-
-def verify_draw(board):
-    ...
+def verify_draw(board: list[str]) -> bool:
+    for line in board:
+        if " " in line:
+            return False
+    return True    
 
 
