@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import uuid
 
 from board_manager import start_board,verify_draw,verify_win
-from db_manager import get_db_connection, create_players_table, create_player
+from db_manager import create_players_table, create_player, create_match_table, create_match, update_player_win,update_player_lose, update_player_draw
 from tictactoe_ml import TicTacToeMl
 
 app = Flask(__name__)
@@ -26,26 +26,32 @@ def register_player():
     
     return jsonify({"player_id": player_id}), 201
 
-@app.route('/api/start', methods=['POST'])
+@app.route('/api/board', methods=['GET'])
+def peek_board():
+    return start_board()
+
+@app.route('/api/start/', methods=['POST'])
 def start_game():
     data = request.get_json()
-    player1_id = str(uuid.uuid4())
-    player2_id = str(uuid.uuid4())
+    player1_id = data.get("player1")
+    player2_id = data.get("player2")
     game_id = str(uuid.uuid4())
+    board = start_board()
     
-    tabuleiro = start_board()
-    
+    create_match_table()
+    create_match(player1_id, player2_id, game_id, board)
+
     matchs[game_id] = {
-        "tabuleiro": tabuleiro,
-        "jogador_atual": player1_id,
-        "jogadores": [player1_id, player2_id]
+        "board": board,
+        "current_player": player1_id,
+        "players": [player1_id, player2_id]
     }
-    
+
     return jsonify({
         "game_id": game_id,
         "player1_id": player1_id,
         "player2_id": player2_id,
-        "tabuleiro": tabuleiro
+        "tabuleiro": board
     }), 201
 
 
@@ -54,8 +60,8 @@ def make_move():
     data = request.get_json()
     game_id = data.get("game_id")
     player_id = data.get("player_id")
-    line = data.get("linha")
-    column = data.get("coluna")
+    line = int(data.get("linha"))
+    column = int(data.get("coluna"))
 
     if not all([game_id, player_id, line, column]):
         if not data:
@@ -85,12 +91,20 @@ def make_move():
     board[line][column] = symbol
 
     if verify_win(board):
+        winner = player_id
+        loser =  _match["players"][1] if _match["players"][0] == winner else _match["players"][0]
+
+        update_player_win(winner)
+        update_player_lose(loser)
+
         return jsonify({
             "tabuleiro": board,
-            "resultado": f"Vitoria do jogador {player_id}"
+            "resultado": f"Vitoria do jogador {winner}"
         }), 200
     
     if verify_draw(board):
+        update_player_draw(*_match["players"])
+
         return jsonify({
             "tabuleiro": board,
             "resultado": "Empate"
