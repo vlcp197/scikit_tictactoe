@@ -104,5 +104,12 @@ def update_player_draw(p1,p2):
     conn.commit()
     conn.close()
 
+def fetch_player_stats(player_id):
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute("""SELECT name, games_won, games_lost, games_drawn FROM players WHERE player_id = (?)""", (player_id,))
+    result = cursor.fetchone()
+    return result[0:4] 
+
 
 
