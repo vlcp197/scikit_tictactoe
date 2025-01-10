@@ -2,15 +2,16 @@ from flask import Flask, request, jsonify
 import uuid
 
 from board_manager import start_board,verify_draw,verify_win
-from db_manager import create_players_table, create_player, create_match_table, create_match, update_player_win,update_player_lose, update_player_draw
-from tictactoe_ml import TicTacToeMl
+from db_manager import create_players_table, create_player, create_match_table, create_match, update_player_win,update_player_lose, update_player_draw, fetch_player_stats
+import tictactoe_ml as ml
 
 app = Flask(__name__)
 matchs = {}
 
-tictactoe_ml = TicTacToeMl()
-
 create_players_table()
+
+dataset = ml.load_dataset()
+model = ml.train_model(dataset)
 
 # Route to register new players
 @app.route('/api/register', methods=['POST'])
@@ -117,6 +118,15 @@ def make_move():
         "mensagem": "Jogada válida"
     }), 200
 
+@app.route('/api/player-stats/<player_id>', methods=['GET'])
+def player_stats(player_id):
+    name,wins,loses,draws = fetch_player_stats(player_id)
+    return jsonify({
+        "Nome": name,
+        "Vitorias": wins,
+        "Derrotas": loses,
+        "Empates": draws,
+    }), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
