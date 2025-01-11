@@ -34,27 +34,23 @@ def peek_board():
 @app.route('/api/start/', methods=['POST'])
 def start_game():
     data = request.get_json()
-    player1_id = data.get("player1")
-    player2_id = data.get("player2")
+    player_id = data.get("player")
     game_id = str(uuid.uuid4())
     board = start_board()
     
     create_match_table()
-    create_match(player1_id, player2_id, game_id, board)
+    create_match(player_id, game_id, board)
 
     matchs[game_id] = {
         "board": board,
-        "current_player": player1_id,
-        "players": [player1_id, player2_id]
+        "current_player": player_id,
     }
 
     return jsonify({
         "game_id": game_id,
-        "player1_id": player1_id,
-        "player2_id": player2_id,
+        "player_id": player_id,
         "tabuleiro": board
     }), 201
-
 
 @app.route('/api/move', methods=['POST'])
 def make_move():
@@ -87,39 +83,60 @@ def make_move():
     if board[line][column] != " ":
         return jsonify({"error": "Posição já ocupada"}), 400
 
-    symbol = "X" if _match["current_player"] == _match["players"][0] else "O"
-
-    board[line][column] = symbol
+    board[line][column] = "X"
 
     if verify_win(board):
-        winner = player_id
-        loser =  _match["players"][1] if _match["players"][0] == winner else _match["players"][0]
 
-        update_player_win(winner)
-        update_player_lose(loser)
-
+        update_player_win(player_id)
+        ml.update_dataset(board, result="Lose")
         return jsonify({
             "tabuleiro": board,
-            "resultado": f"Vitoria do jogador {winner}"
+            "resultado": f"Vitoria do jogador {player_id}"
         }), 200
     
     if verify_draw(board):
-        update_player_draw(*_match["players"])
+        update_player_draw(player_id)
 
         return jsonify({
             "tabuleiro": board,
             "resultado": "Empate"
         }), 200
     
-    _match["current_player"] = _match["players"][1] if _match["current_player"] == _match["players"][0] else _match["players"][0]
+    # AI makes its move
+    flat_board = [cell for row in board for cell in row]
+    ai_move_index = ml.predict_best_move(flat_board, model)
+    if ai_move_index is None:
+        return jsonify({"error": "Erro ao calcular a jogada da IA"}), 500
+
+    ai_line, ai_column = divmod(ai_move_index, 3)
+    board[ai_line][ai_column] = "O"
+
+    # Check if AI wins
+    if verify_win(board):
+        update_player_lose(player_id)
+        ml.update_dataset(board, result="Win")
+        return jsonify({
+            "tabuleiro": board,
+            "resultado": "Vitoria da IA"
+        }), 200
+
+    if verify_draw(board):
+        update_player_draw(player_id)
+        ml.update_dataset(board, result="Draw")
+        return jsonify({
+            "tabuleiro": board,
+            "resultado": "Empate"
+        }), 200
 
     return jsonify({
         "tabuleiro": board,
         "mensagem": "Jogada válida"
     }), 200
 
-@app.route('/api/player-stats/<player_id>', methods=['GET'])
-def player_stats(player_id):
+@app.route('/api/player-stats/', methods=['POST'])
+def player_stats():
+    data = request.get_json()
+    player_id = data.get("player_id")
     name,wins,loses,draws = fetch_player_stats(player_id)
     return jsonify({
         "Nome": name,
@@ -127,6 +144,7 @@ def player_stats(player_id):
         "Derrotas": loses,
         "Empates": draws,
     }), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)

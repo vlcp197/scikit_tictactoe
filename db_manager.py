@@ -1,7 +1,7 @@
 import sqlite3
 
 # Allow connection to the database
-def get_db_connection() -> sqlite3.Row:
+def get_db_connection() -> sqlite3.Connection:
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
     return conn
@@ -38,8 +38,7 @@ def create_match_table():
     conn.execute('''
         CREATE TABLE IF NOT EXISTS match (
             game_id	TEXT NOT NULL UNIQUE PRIMARY KEY,
-            player_1	TEXT,
-            player_2	TEXT,
+            player	TEXT,
             board_state	TEXT
         )
     ''')
@@ -47,60 +46,46 @@ def create_match_table():
     conn.close()
 
 
-def create_match(player1_id,player2_id, game_id, board):
+def create_match(player_id, game_id, board):
     
     board = ' | '.join(','.join(inner_list) for inner_list in board)
 
     conn = get_db_connection()
     conn.execute(
         '''
-        INSERT INTO match (game_id, player_1, player_2, board_state) 
-        VALUES (?, ?, ?, ?)
+        INSERT INTO match (game_id, player, board_state) 
+        VALUES (?, ?, ?)
         ''', 
-        (game_id, player1_id, player2_id, board)
+        (game_id, player_id, board)
         )
     conn.commit()
     conn.close()
 
 def update_player_win(player_id):
-    ...
     conn = get_db_connection()
     conn.execute(
-        '''
-         UPDATE players 
-         SET games_won = games_won + 1
-         WHERE player_id = ?
-       ''', 
-        player_id)
+        """
+        UPDATE players
+        SET games_won = 1 
+        WHERE player_id = ?
+        """, 
+        (player_id,))
     conn.commit()
     conn.close()
 
 def update_player_lose(player_id):
-    ...
     conn = get_db_connection()
     conn.execute(
-        '''
-         UPDATE players 
-         SET games_lost = games_lost + 1
-         WHERE player_id = ?
-       ''', 
-        player_id
+        "UPDATE players SET games_lost = games_lost + 1 WHERE player_id = ?", 
+        (player_id,)
         )
     conn.commit()
     conn.close()
 
-def update_player_draw(p1,p2):
-    players = [p1, p2]
-
+def update_player_draw(player_id):
     conn = get_db_connection()
-    for player in players:
-        conn.execute(
-            '''
-            UPDATE players 
-            SET games_drawn = games_drawn + 1
-            WHERE player_id = ?
-        ''', 
-            player)
+    conn.execute(
+            "UPDATE players SET games_drawn = games_drawn + 1 WHERE player_id = ?", (player_id,))
     conn.commit()
     conn.close()
 
