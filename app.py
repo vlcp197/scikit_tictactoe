@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import uuid
 
 from board_manager import start_board,verify_draw,verify_win
-from db_manager import create_players_table, create_player, create_match_table, create_match, update_player_win,update_player_lose, update_player_draw, fetch_player_stats
+from db_manager import create_players_table, create_player, create_match_table, create_match, update_player_win,update_player_lose, update_player_draw, fetch_player_stats, update_board
 import tictactoe_ml as ml
 
 app = Flask(__name__)
@@ -14,7 +14,7 @@ dataset = ml.load_dataset()
 model = ml.train_model(dataset)
 
 # Route to register new players
-@app.route('/api/register', methods=['POST'])
+@app.route('/api/register/', methods=['POST'])
 def register_player():
     data = request.get_json()
     if not data or 'nome' not in data:
@@ -27,14 +27,14 @@ def register_player():
     
     return jsonify({"player_id": player_id}), 201
 
-@app.route('/api/board', methods=['GET'])
+@app.route('/api/board/', methods=['GET'])
 def peek_board():
     return start_board()
 
 @app.route('/api/start/', methods=['POST'])
 def start_game():
     data = request.get_json()
-    player_id = data.get("player")
+    player_id = data.get("player_id")
     game_id = str(uuid.uuid4())
     board = start_board()
     
@@ -52,7 +52,7 @@ def start_game():
         "tabuleiro": board
     }), 201
 
-@app.route('/api/move', methods=['POST'])
+@app.route('/api/move/', methods=['POST'])
 def make_move():
     data = request.get_json()
     game_id = data.get("game_id")
@@ -84,6 +84,7 @@ def make_move():
         return jsonify({"error": "Posição já ocupada"}), 400
 
     board[line][column] = "X"
+    update_board(game_id, board)
 
     if verify_win(board):
 
@@ -110,6 +111,7 @@ def make_move():
 
     ai_line, ai_column = divmod(ai_move_index, 3)
     board[ai_line][ai_column] = "O"
+    update_board(game_id, board)
 
     # Check if AI wins
     if verify_win(board):
