@@ -1,31 +1,24 @@
 # initializes an empty game board 
-def start_board() -> list[str]:    
-    return [[" " for _ in range(3)] for _ in range(3)]
+def start_board() -> list[int]:    
+    board = [0] * 9
+    return board
 
 # the board parameter needs to be a 3X3 list
-def verify_win(board: list[str]) -> bool:
-    for i in range(3):
-        # verify if the board have a horizontal line
-        if board[i][0] == board[i][1] == board[i][2] != " ":
-            return True
-        
-        # verify if the board have a vertical line
-        if board[0][i] == board[1][i] == board[2][i] != " ":
-            return True
+def check_winner(board: list[int]) -> int | None:
+    """Check if there's a winner."""
+    winning_combinations = [(0, 1, 2), (3, 4, 5), (6, 7, 8),
+                            (0, 3, 6), (1, 4, 7), (2, 5, 8),
+                            (0, 4, 8), (2, 4, 6)]
+    for combo in winning_combinations:
+        if board[combo[0]] == board[combo[1]] == board[combo[2]] != 0:
+            return board[combo[0]]
+    if 0 not in board:
+        return 0  # Draw
+    return None  # Game continues
 
-    # verify if the board have a diagonal line    
-    if board[0][0] == board[1][1] == board[2][2] != " ":
-        return True
-    
-    if board[0][2] == board[1][1] == board[2][0] != " ":
-        return True
-    
-    return False
-    
-def verify_draw(board: list[str]) -> bool:
-    for line in board:
-        if " " in line:
-            return False
-    return True    
-
-
+def board_to_repr(board: list[int]) -> str:
+    board_repr = ",".join(str(x) for x in board)
+    parts = board_repr.split(',')
+    board_repr = f"{parts[0]} , {parts[1]} , {parts[2]} | {parts[3]} , {parts[4]} , {parts[5]} | {parts[6]} , {parts[7]} , {parts[8]}"
+    board_repr = board_repr.replace("0", " ").replace("-1", "O").replace("1", "X")
+    return board_repr
