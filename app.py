@@ -1,15 +1,15 @@
-from utils import load_dataset, update_dataset
+import numpy as np
+from utils import load_dataset, update_dataset, position_to_index
 import ticTacToeMl as ml
 from preprocessing import preprocessing
-from board_manager import start_board,verify_draw,verify_win
+from board_manager import board_to_repr, start_board,check_winner
 import db_manager as dbm
 
 from flask import Flask, request, jsonify
-import numpy as np
 import uuid
 
-
 app = Flask(__name__)
+
 matchs = {}
 
 dataset = load_dataset("dataset.data")
@@ -19,6 +19,7 @@ model = ml.train_model(*X_y)
 
 dbm.create_players_table()
 
+outcome = None
 # Route to register new players
 @app.route('/api/register/', methods=['POST'])
 def register_player():
@@ -33,9 +34,17 @@ def register_player():
     
     return jsonify({"player_id": player_id}), 201
 
-@app.route('/api/board/', methods=['GET'])
+@app.route('/api/board/', methods=['POST'])
 def peek_board():
-    return start_board()
+    data = request.get_json()
+    game_id = data.get("game_id")
+    _match = matchs.get(game_id)
+    board = _match["board"]
+
+    return jsonify({
+        "tabuleiro": board,
+        "Jogo": game_id
+    }), 200
 
 @app.route('/api/start/', methods=['POST'])
 def start_game():
@@ -44,8 +53,10 @@ def start_game():
     game_id = str(uuid.uuid4())
     board = start_board()
     
+    board_repr = board_to_repr(board)
+
     dbm.create_match_table()
-    dbm.create_match(player_id, game_id, board)
+    dbm.create_match(player_id, game_id, board_repr)
 
     matchs[game_id] = {
         "board": board,
@@ -55,7 +66,7 @@ def start_game():
     return jsonify({
         "game_id": game_id,
         "player_id": player_id,
-        "tabuleiro": board
+        "tabuleiro": board_repr
     }), 201
 
 @app.route('/api/move/', methods=['POST'])
@@ -77,7 +88,7 @@ def make_move():
             return jsonify({"error": "campo 'linha' ausente"}), 400
         elif 'coluna' not in data:
             return jsonify({"error": "campo 'coluna' ausente"}), 400
-    
+
     _match = matchs.get(game_id)
     if not _match:
         return jsonify({"error": "Jogo não encontrado"}), 404
@@ -86,63 +97,60 @@ def make_move():
         return jsonify({"error": "Não é o turno deste jogador"}), 403
     
     board = _match["board"]
-    if board[line][column] != " ":
+    index = position_to_index(line, column)
+    if board[index] != 0:
         return jsonify({"error": "Posição já ocupada"}), 400
 
-    board[line][column] = "X"
+    board[index] = 1
     dbm.update_board(game_id, board)
 
-    if verify_win(board):
+    outcome = check_winner(board)
+    if outcome:
+        if outcome == 0:
+            dbm.update_player_draw(player_id)
+            update_dataset(board, "negative")
+            return jsonify({
+                "tabuleiro": board_to_repr(board),
+                "resultado": "Empate"
+            }), 200
+        
         dbm.update_player_win(player_id)
-        update_dataset(board, result="negative")
-        return jsonify({
-            "tabuleiro": board,
-            "resultado": f"Vitoria do jogador {player_id}"
-        }), 200
-    
-    if verify_draw(board):
-        dbm.update_player_draw(player_id)
-        update_dataset(board, result="negative")
-        return jsonify({
-            "tabuleiro": board,
-            "resultado": "Empate"
-        }), 200
-    
-    # AI makes its move
+        update_dataset(board, "negative")
+        name,*_ = dbm.fetch_player_stats(player_id)
 
-    board_state = [item for sublist in board for item in sublist]
+        return jsonify({
+            "tabuleiro": board_to_repr(board),
+            "resultado": f"Vitoria do jogador: {name}"
+        }), 200
+    
+    # # AI makes its move
+    board_state = np.array(board).reshape(1, -1)
     move = np.argmax(model.predict_proba(board_state)[0])
     while board[move] != 0:
         move = (move + 1) % 9
-    board[move] = -1 
+    board[move] = -1  # Model is O
 
-    # ai_move_index = ml.predict_best_move(board, model)
-    # if ai_move_index is None:
-    #     return jsonify({"error": "Erro ao calcular a jogada da IA"}), 500
 
-    # ai_line, ai_column = divmod(ai_move_index, 3)
-    # board[ai_line][ai_column] = "O"
-    # update_board(game_id, board)
-
+    outcome_ai = check_winner(board)
     # Check if AI wins
-    if verify_win(board):
+    if check_winner(board):
+        if outcome_ai == 0 :
+            dbm.update_player_draw(player_id)
+            update_dataset(board, "negative")
+            return jsonify({
+                "tabuleiro": board,
+                "resultado": "Empate"
+            }), 200
+        
         dbm.update_player_lose(player_id)
-        update_dataset(board, result="positive")
+        update_dataset(board, "positive")
         return jsonify({
-            "tabuleiro": board,
+            "tabuleiro": board_to_repr(board),
             "resultado": "Vitoria da IA"
         }), 200
 
-    if verify_draw(board):
-        dbm.update_player_draw(player_id)
-        update_dataset(board, result="negative")
-        return jsonify({
-            "tabuleiro": board,
-            "resultado": "Empate"
-        }), 200
-
     return jsonify({
-        "tabuleiro": board,
+        "tabuleiro": board_to_repr(board),
         "mensagem": "Jogada válida"
     }), 200
 
