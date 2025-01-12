@@ -3,7 +3,7 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 
 
-def preprocessing(data: pd.Dataframe) -> list[array]:
+def preprocessing(data: pd.DataFrame) -> list[array]:
     """
     Prepare the dataset for train the model
     """
