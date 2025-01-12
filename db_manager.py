@@ -66,7 +66,7 @@ def update_player_win(player_id):
     conn.execute(
         """
         UPDATE players
-        SET games_won = 1 
+        SET games_won = games_won + 1 
         WHERE player_id = ?
         """, 
         (player_id,))
@@ -76,16 +76,25 @@ def update_player_win(player_id):
 def update_player_lose(player_id):
     conn = get_db_connection()
     conn.execute(
-        "UPDATE players SET games_lost = games_lost + 1 WHERE player_id = ?", 
-        (player_id,)
-        )
+        """
+        UPDATE players
+        SET games_lost = games_lost + 1 
+        WHERE player_id = ?
+        """, 
+        (player_id,))
     conn.commit()
     conn.close()
+
 
 def update_player_draw(player_id):
     conn = get_db_connection()
     conn.execute(
-            "UPDATE players SET games_drawn = games_drawn + 1 WHERE player_id = ?", (player_id,))
+        """
+        UPDATE players
+        SET games_drawn = games_drawn + 1 
+        WHERE player_id = ?
+        """, 
+        (player_id,))
     conn.commit()
     conn.close()
 
