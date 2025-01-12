@@ -20,11 +20,11 @@ model = ml.train_model(*X_y)
 dbm.create_players_table()
 
 outcome = None
-# Route to register new players
 
 
 @app.route('/api/register/', methods=['POST'])
 def register_player():
+    """Route to register new players"""
     data = request.get_json()
     if not data or 'nome' not in data:
         return jsonify({"error": "campo 'nome' ausente"}), 400
@@ -39,6 +39,9 @@ def register_player():
 
 @app.route('/api/board/', methods=['POST'])
 def peek_board():
+    """
+    Route to retrieve the board state
+    """
     data = request.get_json()
     game_id = data.get("game_id")
     _match = matchs.get(game_id)
@@ -52,6 +55,9 @@ def peek_board():
 
 @app.route('/api/start/', methods=['POST'])
 def start_game():
+    """
+    Route to start a new match
+    """
     data = request.get_json()
     player_id = data.get("player_id")
     game_id = str(uuid.uuid4())
@@ -76,6 +82,9 @@ def start_game():
 
 @app.route('/api/move/', methods=['POST'])
 def make_move():
+    """
+    Route to make a move in the game
+    """
     data = request.get_json()
     game_id = data.get("game_id")
     player_id = data.get("player_id")
@@ -161,6 +170,9 @@ def make_move():
 
 @app.route('/api/player-stats/', methods=['POST'])
 def player_stats():
+    """
+    Route to check the player statistics
+    """
     data = request.get_json()
     player_id = data.get("player_id")
     name, wins, loses, draws = dbm.fetch_player_stats(player_id)
