@@ -97,4 +97,15 @@ def fetch_player_stats(player_id):
     return result[0:4] 
 
 
-
+def update_board(game_id, board):
+    board = ' | '.join(','.join(inner_list) for inner_list in board)
+    conn = get_db_connection()
+    conn.execute(
+        """
+        UPDATE match
+        SET board_state = ? 
+        WHERE game_id = ?
+        """, 
+        [board, game_id ])
+    conn.commit()
+    conn.close()
