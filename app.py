@@ -1,17 +1,23 @@
+from utils import load_dataset, update_dataset
+import ticTacToeMl as ml
+from preprocessing import preprocessing
+from board_manager import start_board,verify_draw,verify_win
+import db_manager as dbm
+
 from flask import Flask, request, jsonify
+import numpy as np
 import uuid
 
-from board_manager import start_board,verify_draw,verify_win
-from db_manager import create_players_table, create_player, create_match_table, create_match, update_player_win,update_player_lose, update_player_draw, fetch_player_stats, update_board
-import tictactoe_ml as ml
 
 app = Flask(__name__)
 matchs = {}
 
-create_players_table()
+dataset = load_dataset("dataset.data")
+X_y = preprocessing(dataset)
 
-dataset = ml.load_dataset()
-model = ml.train_model(dataset)
+model = ml.train_model(*X_y)
+
+dbm.create_players_table()
 
 # Route to register new players
 @app.route('/api/register/', methods=['POST'])
@@ -23,7 +29,7 @@ def register_player():
     player_name = data['nome']
     player_id = str(uuid.uuid4())  # Generate an id for the player
     
-    create_player(player_id, player_name)
+    dbm.create_player(player_id, player_name)
     
     return jsonify({"player_id": player_id}), 201
 
@@ -38,8 +44,8 @@ def start_game():
     game_id = str(uuid.uuid4())
     board = start_board()
     
-    create_match_table()
-    create_match(player_id, game_id, board)
+    dbm.create_match_table()
+    dbm.create_match(player_id, game_id, board)
 
     matchs[game_id] = {
         "board": board,
@@ -84,47 +90,52 @@ def make_move():
         return jsonify({"error": "Posição já ocupada"}), 400
 
     board[line][column] = "X"
-    update_board(game_id, board)
+    dbm.update_board(game_id, board)
 
     if verify_win(board):
-
-        update_player_win(player_id)
-        ml.update_dataset(board, result="Lose")
+        dbm.update_player_win(player_id)
+        update_dataset(board, result="negative")
         return jsonify({
             "tabuleiro": board,
             "resultado": f"Vitoria do jogador {player_id}"
         }), 200
     
     if verify_draw(board):
-        update_player_draw(player_id)
-
+        dbm.update_player_draw(player_id)
+        update_dataset(board, result="negative")
         return jsonify({
             "tabuleiro": board,
             "resultado": "Empate"
         }), 200
     
     # AI makes its move
-    flat_board = [cell for row in board for cell in row]
-    ai_move_index = ml.predict_best_move(flat_board, model)
-    if ai_move_index is None:
-        return jsonify({"error": "Erro ao calcular a jogada da IA"}), 500
 
-    ai_line, ai_column = divmod(ai_move_index, 3)
-    board[ai_line][ai_column] = "O"
-    update_board(game_id, board)
+    board_state = [item for sublist in board for item in sublist]
+    move = np.argmax(model.predict_proba(board_state)[0])
+    while board[move] != 0:
+        move = (move + 1) % 9
+    board[move] = -1 
+
+    # ai_move_index = ml.predict_best_move(board, model)
+    # if ai_move_index is None:
+    #     return jsonify({"error": "Erro ao calcular a jogada da IA"}), 500
+
+    # ai_line, ai_column = divmod(ai_move_index, 3)
+    # board[ai_line][ai_column] = "O"
+    # update_board(game_id, board)
 
     # Check if AI wins
     if verify_win(board):
-        update_player_lose(player_id)
-        ml.update_dataset(board, result="Win")
+        dbm.update_player_lose(player_id)
+        update_dataset(board, result="positive")
         return jsonify({
             "tabuleiro": board,
             "resultado": "Vitoria da IA"
         }), 200
 
     if verify_draw(board):
-        update_player_draw(player_id)
-        ml.update_dataset(board, result="Draw")
+        dbm.update_player_draw(player_id)
+        update_dataset(board, result="negative")
         return jsonify({
             "tabuleiro": board,
             "resultado": "Empate"
@@ -139,7 +150,7 @@ def make_move():
 def player_stats():
     data = request.get_json()
     player_id = data.get("player_id")
-    name,wins,loses,draws = fetch_player_stats(player_id)
+    name,wins,loses,draws = dbm.fetch_player_stats(player_id)
     return jsonify({
         "Nome": name,
         "Vitorias": wins,
