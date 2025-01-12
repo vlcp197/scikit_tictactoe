@@ -1,5 +1,7 @@
 import sqlite3
 
+from board_manager import board_to_repr
+
 # Allow connection to the database
 def get_db_connection() -> sqlite3.Connection:
     conn = sqlite3.connect('database.db')
@@ -45,11 +47,8 @@ def create_match_table():
     conn.commit()
     conn.close()
 
-
-def create_match(player_id, game_id, board):
+def create_match(player_id: str, game_id: str, board: list[int]):
     
-    board = ' | '.join(','.join(inner_list) for inner_list in board)
-
     conn = get_db_connection()
     conn.execute(
         '''
@@ -61,7 +60,7 @@ def create_match(player_id, game_id, board):
     conn.commit()
     conn.close()
 
-def update_player_win(player_id):
+def update_player_win(player_id: str):
     conn = get_db_connection()
     conn.execute(
         """
@@ -73,7 +72,7 @@ def update_player_win(player_id):
     conn.commit()
     conn.close()
 
-def update_player_lose(player_id):
+def update_player_lose(player_id: str):
     conn = get_db_connection()
     conn.execute(
         """
@@ -86,7 +85,7 @@ def update_player_lose(player_id):
     conn.close()
 
 
-def update_player_draw(player_id):
+def update_player_draw(player_id: str):
     conn = get_db_connection()
     conn.execute(
         """
@@ -98,7 +97,7 @@ def update_player_draw(player_id):
     conn.commit()
     conn.close()
 
-def fetch_player_stats(player_id):
+def fetch_player_stats(player_id: str) -> list[str|int]:
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     cursor.execute("""SELECT name, games_won, games_lost, games_drawn FROM players WHERE player_id = (?)""", (player_id,))
@@ -106,8 +105,8 @@ def fetch_player_stats(player_id):
     return result[0:4] 
 
 
-def update_board(game_id, board):
-    board = ' | '.join(','.join(inner_list) for inner_list in board)
+def update_board(game_id: str, board: list[int]):
+    board = board_to_repr(board)
     conn = get_db_connection()
     conn.execute(
         """
