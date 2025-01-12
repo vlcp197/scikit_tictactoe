@@ -1,17 +1,8 @@
-import random
 import numpy as np
-
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import LabelEncoder
 
-
-label_encoder = LabelEncoder()
-
-
-
-def train_model(X_train, X_test, y_train, y_test):
+def train_model(X_train: list[np.array], X_test: list[np.array], y_train: list[np.array], y_test: list[np.array]) -> DecisionTreeClassifier:
     # Train the Decision Tree model
     clf = DecisionTreeClassifier()
     clf.fit(X_train, y_train)
@@ -22,14 +13,12 @@ def train_model(X_train, X_test, y_train, y_test):
     print(f"Model Accuracy: {accuracy:.2f}")
     return clf
 
-
-def board_to_features(board):
+def board_to_features(board: list[int]) -> list[str]:
     if isinstance(board[0], list):  
         board = [cell for row in board for cell in row]  
     return [1 if x == 'X' else -1 if x == 'O' else 0 for x in board]
 
-def predict_best_move(board, model=None):
-
+def predict_best_move(board: list[int], model=None) -> np.array:
     teste = board_to_features(board)
     empty_cells = [i for i in range(9) if teste[i] == 0]
     if model is not None:
