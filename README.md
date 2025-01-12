@@ -129,7 +129,7 @@ RESPOSTA
 ### Endpoint para fazer um movimento no jogo
 POST http://127.0.0.1:5000/api/move/
 
-Você precisa fazer uma requisição no endpoint para iniciar um novo jogo e copiar o game_id que é retornado pela api para usar como argumento nesta requisição
+Você precisa fazer uma requisição no endpoint para iniciar um novo jogo e copiar o game_id que é retornado pela api para usar como argumento nesta requisição http://127.0.0.1:5000/api/start/
 
 
 REQUISIÇÃO
