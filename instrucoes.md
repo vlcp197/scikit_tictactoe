@@ -16,7 +16,7 @@ Instruções Gerais
 
 3. Inclua um arquivo README.md com instruções claras de como configurar e executar o projeto.
 
-4. Use commits consistentes para documentar o desenvolvimento do projeto.
+4. Use commits consistentes para documentar o desenvolvimento do projeto. `FEITO`
 
  
 Parte 1: Configuração do Ambiente
@@ -24,7 +24,7 @@ Parte 1: Configuração do Ambiente
  
 1. Setup do Ambiente
 
-- Crie um ambiente virtual para o projeto.
+- Crie um ambiente virtual para o projeto. `FEITO`
 
 - Prepare um arquivo `requirements.txt` com todas as dependências necessárias, incluindo Flask, numpy, pandas e uma biblioteca de Machine Learning como scikit-learn. `FEITO`
 
@@ -62,16 +62,15 @@ Parte 4: Desenvolvimento da API Flask
 - Implemente uma rota `POST /api/move` que aceita a jogada do jogador utilizando seu `player_id`. A entrada deve incluir a posição no tabuleiro. Retorne o estado atualizado do tabuleiro e o resultado se o jogo terminou.
 `FEITO`
  
-
 Parte 5: Machine Learning e Histórico de Jogadas
 
 1. Dataset de Histórico de Jogadas
 
-- Utilize ou simule um dataset que insere várias situações de jogo com as jogadas subsequentes mais prováveis.
+- Utilize ou simule um dataset que insere várias situações de jogo com as jogadas subsequentes mais prováveis. `FEITO`
 
 2. Treinamento do Modelo
 
-- Treine um modelo de Machine Learning usando o dataset para prever a próxima melhor jogada, considerando o histórico de jogadas.
+- Treine um modelo de Machine Learning usando o dataset para prever a próxima melhor jogada, considerando o histórico de jogadas. `FEITO`
 
 3. Integração com a API
 
@@ -79,7 +78,7 @@ Parte 5: Machine Learning e Histórico de Jogadas
 
 4. Atualização do Histórico
 
-- Após cada jogo, atualize o histórico com os resultados para melhorias futuras no modelo.
+- Após cada jogo, atualize o histórico com os resultados para melhorias futuras no modelo. `FEITO`
 
 
 Parte 6: Extras (Opcional)

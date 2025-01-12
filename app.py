@@ -2,7 +2,7 @@ import numpy as np
 from utils import load_dataset, update_dataset, position_to_index
 import ticTacToeMl as ml
 from preprocessing import preprocessing
-from board_manager import board_to_repr, start_board,check_winner
+from board_manager import board_to_repr, start_board, check_winner
 import db_manager as dbm
 
 from flask import Flask, request, jsonify
@@ -21,18 +21,21 @@ dbm.create_players_table()
 
 outcome = None
 # Route to register new players
+
+
 @app.route('/api/register/', methods=['POST'])
 def register_player():
     data = request.get_json()
     if not data or 'nome' not in data:
         return jsonify({"error": "campo 'nome' ausente"}), 400
-    
+
     player_name = data['nome']
     player_id = str(uuid.uuid4())  # Generate an id for the player
-    
+
     dbm.create_player(player_id, player_name)
-    
+
     return jsonify({"player_id": player_id}), 201
+
 
 @app.route('/api/board/', methods=['POST'])
 def peek_board():
@@ -46,16 +49,17 @@ def peek_board():
         "Jogo": game_id
     }), 200
 
+
 @app.route('/api/start/', methods=['POST'])
 def start_game():
     data = request.get_json()
     player_id = data.get("player_id")
     game_id = str(uuid.uuid4())
     board = start_board()
-    
+
     board_repr = board_to_repr(board)
 
-    dbm.create_match_table()
+    dbm.create_match_board()
     dbm.create_match(player_id, game_id, board_repr)
 
     matchs[game_id] = {
@@ -68,6 +72,7 @@ def start_game():
         "player_id": player_id,
         "tabuleiro": board_repr
     }), 201
+
 
 @app.route('/api/move/', methods=['POST'])
 def make_move():
@@ -92,10 +97,10 @@ def make_move():
     _match = matchs.get(game_id)
     if not _match:
         return jsonify({"error": "Jogo não encontrado"}), 404
-    
+
     if player_id != _match["current_player"]:
         return jsonify({"error": "Não é o turno deste jogador"}), 403
-    
+
     board = _match["board"]
     index = position_to_index(line, column)
     if board[index] != 0:
@@ -113,16 +118,16 @@ def make_move():
                 "tabuleiro": board_to_repr(board),
                 "resultado": "Empate"
             }), 200
-        
+
         dbm.update_player_win(player_id)
         update_dataset(board, "negative")
-        name,*_ = dbm.fetch_player_stats(player_id)
+        name, *_ = dbm.fetch_player_stats(player_id)
 
         return jsonify({
             "tabuleiro": board_to_repr(board),
             "resultado": f"Vitoria do jogador: {name}"
         }), 200
-    
+
     # # AI makes its move
     board_state = np.array(board).reshape(1, -1)
     move = np.argmax(model.predict_proba(board_state)[0])
@@ -130,18 +135,17 @@ def make_move():
         move = (move + 1) % 9
     board[move] = -1  # Model is O
 
-
     outcome_ai = check_winner(board)
     # Check if AI wins
     if check_winner(board):
-        if outcome_ai == 0 :
+        if outcome_ai == 0:
             dbm.update_player_draw(player_id)
             update_dataset(board, "negative")
             return jsonify({
                 "tabuleiro": board,
                 "resultado": "Empate"
             }), 200
-        
+
         dbm.update_player_lose(player_id)
         update_dataset(board, "positive")
         return jsonify({
@@ -154,11 +158,12 @@ def make_move():
         "mensagem": "Jogada válida"
     }), 200
 
+
 @app.route('/api/player-stats/', methods=['POST'])
 def player_stats():
     data = request.get_json()
     player_id = data.get("player_id")
-    name,wins,loses,draws = dbm.fetch_player_stats(player_id)
+    name, wins, loses, draws = dbm.fetch_player_stats(player_id)
     return jsonify({
         "Nome": name,
         "Vitorias": wins,
@@ -166,6 +171,24 @@ def player_stats():
         "Empates": draws,
     }), 200
 
+# @app.route('/api/ai-move/', methods=['POST'])
+# def ai_hint():
+#     data = request.get_json()
+#     game_id = data.get("game_id")
+#     _match = matchs.get(game_id)
+#     board = _match["board"]
+
+#     board_state = np.array(board).reshape(1, -1)
+#     move = np.argmax(model.predict_proba(board_state)[0])
+#     while board[move] != 0:
+#         move = (move + 1) % 9
+#     board[move] = -1  # Model is O
+#     ...
+#     return jsonify({
+#         "Próxima jogada sugerida: ": None
+#     }), 200
+
 
 if __name__ == '__main__':
+
     app.run(debug=True)
