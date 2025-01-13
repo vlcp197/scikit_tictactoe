@@ -63,10 +63,8 @@ def start_game():
     game_id = str(uuid.uuid4())
     board = start_board()
 
-    board_repr = board_to_repr(board)
-
     dbm.create_match_board()
-    dbm.create_match(player_id, game_id, board_repr)
+    dbm.create_match(player_id, game_id, board_to_repr(board))
 
     matchs[game_id] = {
         "board": board,
@@ -76,7 +74,7 @@ def start_game():
     return jsonify({
         "game_id": game_id,
         "player_id": player_id,
-        "tabuleiro": board_repr
+        "tabuleiro": board_to_repr(board)
     }), 201
 
 
