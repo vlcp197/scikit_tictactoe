@@ -76,6 +76,9 @@ Estrutura do projeto:
     ```
     
 ## Como utilizar a API
+Para utilizar a API é necessário uma ferramenta como o cURL ou o Postman. 
+
+
 ### Endpoint para registrar jogador
 POST http://127.0.0.1:5000/api/register/
 
