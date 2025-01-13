@@ -177,3 +177,20 @@ RESPOSTA
         "Empates": 0,
 }
 ```
+
+### Endpoint para sugerir a próxima jogada do jogador
+POST http://127.0.0.1:5000/api/ai-move/
+
+REQUISIÇÃO
+```json
+{
+    "game_id": "7e5ab2c9-5fd0-4fd6-8ec0-709bfdc334ae"
+}
+```
+RESPOSTA
+```json
+{
+    "Próxima jogada sugerida": "O , X , O | X ,   , X |   ,   ,  "
+}
+```
+
