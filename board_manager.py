@@ -26,9 +26,7 @@ def board_to_repr(board: list[int]) -> str:
     """
     board_repr = ",".join(str(x) for x in board)
     parts = board_repr.split(',')
-    board_repr = f"""{parts[0]} , {parts[1]} , {parts[2]} |
-                     {parts[3]} , {parts[4]} , {parts[5]} |
-                     {parts[6]} , {parts[7]} , {parts[8]}"""
+    board_repr = f"""{parts[0]} , {parts[1]} , {parts[2]} | {parts[3]} , {parts[4]} , {parts[5]} | {parts[6]} , {parts[7]} , {parts[8]}"""
     board_repr = board_repr\
         .replace("0", " ")\
         .replace("-1", "O")\
