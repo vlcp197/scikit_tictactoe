@@ -42,10 +42,15 @@ def peek_board():
     """
     Route to retrieve the board state
     """
-    data = request.get_json()
-    game_id = data.get("game_id")
-    _match = matchs.get(game_id)
-    board = _match["board"]
+    try:
+        data = request.get_json()
+        game_id = data.get("game_id")
+        _match = matchs.get(game_id)
+        board = _match["board"]
+    except TypeError:
+        return jsonify({
+            "erro": "Jogo não disponível"
+        }), 200
 
     return jsonify({
         "tabuleiro": board_to_repr(board),
@@ -61,6 +66,13 @@ def start_game():
     data = request.get_json()
     player_id = data.get("player_id")
     game_id = str(uuid.uuid4())
+    try:
+        dbm.fetch_player_stats(player_id)
+    except TypeError:
+        return jsonify({
+            "erro": "Jogador não registrado"
+        }), 400
+
     board = start_board()
 
     dbm.create_match_board()
@@ -86,8 +98,11 @@ def make_move():
     data = request.get_json()
     game_id = data.get("game_id")
     player_id = data.get("player_id")
-    line = int(data.get("linha"))
-    column = int(data.get("coluna"))
+    try:
+        line = int(data.get("linha"))
+        column = int(data.get("coluna"))
+    except ValueError:
+        return jsonify({"erro": "Entrada inválida"}), 400
 
     if not all([game_id, player_id, line, column]):
         if not data:
@@ -110,8 +125,11 @@ def make_move():
 
     board = _match["board"]
     index = position_to_index(line, column)
-    if board[index] != 0:
-        return jsonify({"erro": "Posição já ocupada"}), 400
+    try:
+        if board[index] != 0:
+            return jsonify({"erro": "Posição já ocupada"}), 400
+    except IndexError:
+        return jsonify({"erro": "Posição Inválida"}), 400
 
     board[index] = 1
     dbm.update_board(game_id, board)
@@ -184,10 +202,19 @@ def player_stats():
 
 @app.route('/api/ai-move/', methods=['POST'])
 def ai_hint():
-    data = request.get_json()
-    game_id = data.get("game_id")
-    _match = matchs.get(game_id)
-    board = _match["board"]
+    """
+    Route to suggests the next move to the player
+    """
+    try:
+        data = request.get_json()
+        game_id = data.get("game_id")
+        _match = matchs.get(game_id)
+        board = _match["board"]
+    except TypeError:
+        return jsonify({
+            "erro": "Jogo não disponível"
+        }), 200
+
     board_copy = board[:]
     board_state = np.array(board_copy).reshape(1, -1)
     move = np.argmin(model.predict_proba(board_state)[0])
