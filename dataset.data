@@ -958,3 +958,6 @@ o,x,o,o,x,x,x,o,x,negative
 o,o,x,x,x,o,o,x,x,negative
 o,x,o,x,o,o,x,x,x,negative
 o,o,b,b,b,b,x,x,x,negative
+o,o,o,x,x,b,x,b,b,positive
+x,o,o,x,b,b,x,b,b,negative
+o,o,b,b,b,b,x,x,x,negative
