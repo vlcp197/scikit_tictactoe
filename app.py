@@ -27,7 +27,7 @@ def register_player():
     """Route to register new players"""
     data = request.get_json()
     if not data or 'nome' not in data:
-        return jsonify({"error": "campo 'nome' ausente"}), 400
+        return jsonify({"erro": "campo 'nome' ausente"}), 400
 
     player_name = data['nome']
     player_id = str(uuid.uuid4())  # Generate an id for the player
@@ -91,27 +91,27 @@ def make_move():
 
     if not all([game_id, player_id, line, column]):
         if not data:
-            return jsonify({"error": "campos ausentes"}), 400
+            return jsonify({"erro": "campos ausentes"}), 400
         elif 'game_id' not in data:
-            return jsonify({"error": "campo 'game_id' ausente"}), 400
+            return jsonify({"erro": "campo 'game_id' ausente"}), 400
         elif 'player_id' not in data:
-            return jsonify({"error": "campo 'player_id' ausente"}), 400
+            return jsonify({"erro": "campo 'player_id' ausente"}), 400
         elif 'linha' not in data:
-            return jsonify({"error": "campo 'linha' ausente"}), 400
+            return jsonify({"erro": "campo 'linha' ausente"}), 400
         elif 'coluna' not in data:
-            return jsonify({"error": "campo 'coluna' ausente"}), 400
+            return jsonify({"erro": "campo 'coluna' ausente"}), 400
 
     _match = matchs.get(game_id)
     if not _match:
-        return jsonify({"error": "Jogo não encontrado"}), 404
+        return jsonify({"erro": "Jogo não encontrado"}), 404
 
     if player_id != _match["current_player"]:
-        return jsonify({"error": "Não é o turno deste jogador"}), 403
+        return jsonify({"erro": "Não é o turno deste jogador"}), 403
 
     board = _match["board"]
     index = position_to_index(line, column)
     if board[index] != 0:
-        return jsonify({"error": "Posição já ocupada"}), 400
+        return jsonify({"erro": "Posição já ocupada"}), 400
 
     board[index] = 1
     dbm.update_board(game_id, board)
