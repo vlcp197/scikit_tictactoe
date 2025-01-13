@@ -181,25 +181,27 @@ def player_stats():
         "Empates": draws,
     }), 200
 
+
 @app.route('/api/ai-move/', methods=['POST'])
 def ai_hint():
-    raise NotImplementedError("Not Implemented")
-#     data = request.get_json()
-#     game_id = data.get("game_id")
-#     _match = matchs.get(game_id)
-#     board = _match["board"]
+    data = request.get_json()
+    game_id = data.get("game_id")
+    _match = matchs.get(game_id)
+    board = _match["board"]
+    board_copy = board[:]
+    board_state = np.array(board_copy).reshape(1, -1)
+    move = np.argmin(model.predict_proba(board_state)[0])
+    while board_copy[move] != 0:
+        move = (move + 1) % 9
+    board_copy[move] = 1  # Model is X
 
-#     board_state = np.array(board).reshape(1, -1)
-#     move = np.argmax(model.predict_proba(board_state)[0])
-#     while board[move] != 0:
-#         move = (move + 1) % 9
-#     board[move] = -1  # Model is O
-#     ...
-#     return jsonify({
-#         "Próxima jogada sugerida: ": None
-#     }), 200
+    board_to_repr(board_copy)
+
+    return jsonify({
+        "Próxima jogada sugerida": board_to_repr(board_copy)
+    }), 200
 
 
 if __name__ == '__main__':
 
-    app.run(debug=True)
+    app.run()
