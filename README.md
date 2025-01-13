@@ -15,7 +15,9 @@ x,x,o,x,x,o,b,o,o,negative
 ```
 
 A letra b representa posição em branco na partida.
+
 A letra x representa posição do jogador na partida.
+
 A letra o representa posição da ia na partida.
 
 Da esquerda para a direita, as posições de cada letra refletem uma posição no 
