@@ -181,8 +181,9 @@ def player_stats():
         "Empates": draws,
     }), 200
 
-# @app.route('/api/ai-move/', methods=['POST'])
-# def ai_hint():
+@app.route('/api/ai-move/', methods=['POST'])
+def ai_hint():
+    raise NotImplementedError("Not Implemented")
 #     data = request.get_json()
 #     game_id = data.get("game_id")
 #     _match = matchs.get(game_id)
