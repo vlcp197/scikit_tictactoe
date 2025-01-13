@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  flask-app:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - ./dataset.data:/app/dataset.data 
+      - ./database.db:/app/database.db
+    environment:
+      - FLASK_ENV=development
