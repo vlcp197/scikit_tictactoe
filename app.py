@@ -48,7 +48,7 @@ def peek_board():
     board = _match["board"]
 
     return jsonify({
-        "tabuleiro": board,
+        "tabuleiro": board_to_repr(board),
         "Jogo": game_id
     }), 200
 
