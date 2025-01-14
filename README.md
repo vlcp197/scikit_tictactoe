@@ -52,6 +52,8 @@ Estrutura do projeto:
 ├── dockerfile
 ├── docker-compose.yml
 ├── dataset.data
+├── nginx
+│   ├── nginx.conf
 └── requirements.txt
 ```
 
